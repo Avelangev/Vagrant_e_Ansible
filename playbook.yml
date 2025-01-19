@@ -1,0 +1,71 @@
+---
+- name: Configuração da VM
+  hosts: all
+  become: yes
+  tasks:
+
+    # Atualização do sistema operacional
+    - name: Atualizar o sistema operacional
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    # Criar o grupo acesso_ssh se não existir
+    - name: Criar o grupo acesso_ssh se não existir
+      group:
+        name: acesso_ssh
+        state: present
+
+    # Criar o grupo ifpb se não existir
+    - name: Criar o grupo ifpb se não existir
+      group:
+        name: ifpb
+        state: present
+
+    # Configurar hostname permanentemente
+    - name: Configurar hostname permanentemente
+      hostname:
+        name: "{{ ansible_hostname }}"
+
+    # Criar usuários
+    - name: Criar usuário
+      user:
+        name: "{{ item }}"
+        state: present
+        groups: acesso_ssh
+        shell: /bin/bash
+      loop:
+        - avelange 
+
+    # Configurar mensagem de saudação
+    - name: Configurar mensagem de saudação
+      lineinfile:
+        path: /etc/motd
+        line: "Acesso restrito apenas à pessoas com autorização expressa\nSeu acesso está sendo monitorado !!!"
+        state: present
+
+    # Configurar SUDO para o grupo ifpb
+    - name: Configurar SUDO
+      lineinfile:
+        path: /etc/sudoers
+        line: '%ifpb ALL=(ALL) NOPASSWD: ALL'
+        validate: visudo -cf %s
+
+    # Configurar SSH para permitir apenas autenticação por chave pública
+    - name: Configurar SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^{{ item.regex }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regex: '^PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regex: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
+
+    # Gerar chave SSH para o usuário se não existir
+    - name: Gerar chave SSH para o usuário
+      authorized_key:
+        user: "{{ item }}"
+        state: present
+        key: "{{ lookup('file', '/home/avelange/.ssh/id_rsa.pub') }}"  # Certifique-se de que a chave pública está no local correto
+      loop:
+        - avelange
