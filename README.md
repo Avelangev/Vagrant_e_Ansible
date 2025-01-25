@@ -2,7 +2,10 @@
 
 ## Autor
 - Avelange Viana
-
+## Disciplina
+- Administração de Sistemas Abertos
+## Professor
+- Pedro Batista de Carvalho Filho
 ## Descrição do Projeto
 Este projeto provisiona uma infraestrutura virtual usando Vagrant e configura serviços essenciais com Ansible.
 
