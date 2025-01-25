@@ -37,3 +37,6 @@ Este projeto provisiona uma infraestrutura virtual usando Vagrant e configura se
    ```bash
    export VAGRANT_EXPERIMENTAL="disks"
    vagrant up
+6. Após executar o playbook.yml será necessário logar utilizando a chave pública gerada anteriormente, exemplo:
+   ```bash
+   ssh -i /home/<Seu_Usuário>/.ssh/id_rsa avelange@192.168.57.10
