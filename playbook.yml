@@ -1,71 +1,210 @@
----
-- name: Configuração da VM
+- name: Configuração do Servidor
   hosts: all
-  become: yes
-  tasks:
+  become: true
+  vars:
+    hostname_name: "p01-Avelange"
+    ssh_key_path: "/home/avelange/.ssh/id_rsa.pub"
+    volume_group_name: "dados"
+    logical_volume_name: "sistema"
+    logical_volume_size: "15G"
+    nfs_network: "192.168.57.0/24"
 
-    # Atualização do sistema operacional
-    - name: Atualizar o sistema operacional
+  tasks:
+    # 1. Atualização do Sistema Operacional
+    - name: Atualizar pacotes do sistema operacional
       apt:
         update_cache: yes
         upgrade: dist
 
-    # Criar o grupo acesso_ssh se não existir
-    - name: Criar o grupo acesso_ssh se não existir
+    # 2. Configuração do Hostname
+    - name: Alterar o hostname
+      hostname:
+        name: "{{ hostname_name }}"
+
+    - name: Configurar o hostname permanentemente
+      lineinfile:
+        path: /etc/hostname
+        line: "{{ hostname_name }}"
+
+    # 3. Criar grupo e usuários
+    - name: Criar grupo acesso_ssh
       group:
         name: acesso_ssh
         state: present
 
-    # Criar o grupo ifpb se não existir
-    - name: Criar o grupo ifpb se não existir
-      group:
-        name: ifpb
-        state: present
-
-    # Configurar hostname permanentemente
-    - name: Configurar hostname permanentemente
-      hostname:
-        name: "{{ ansible_hostname }}"
-
-    # Criar usuários
-    - name: Criar usuário
+    - name: Criar usuários do grupo acesso_ssh
       user:
-        name: "{{ item }}"
-        state: present
-        groups: acesso_ssh
+        name: "{{ item.name }}"
+        group: acesso_ssh
         shell: /bin/bash
+        home: "{{ item.home }}"
+        create_home: yes
+        state: present
       loop:
-        - avelange 
+        - { name: "avelange", home: "/home/avelange" }
+        - { name: "ifpb", home: "/home/ifpb" }
 
-    # Configurar mensagem de saudação
-    - name: Configurar mensagem de saudação
-      lineinfile:
-        path: /etc/motd
-        line: "Acesso restrito apenas à pessoas com autorização expressa\nSeu acesso está sendo monitorado !!!"
-        state: present
-
-    # Configurar SUDO para o grupo ifpb
-    - name: Configurar SUDO
-      lineinfile:
-        path: /etc/sudoers
-        line: '%ifpb ALL=(ALL) NOPASSWD: ALL'
-        validate: visudo -cf %s
-
-    # Configurar SSH para permitir apenas autenticação por chave pública
-    - name: Configurar SSH
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^{{ item.regex }}'
-        line: "{{ item.line }}"
-      with_items:
-        - { regex: '^PermitRootLogin', line: 'PermitRootLogin no' }
-        - { regex: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
-
-    # Gerar chave SSH para o usuário se não existir
-    - name: Gerar chave SSH para o usuário
-      authorized_key:
-        user: "{{ item }}"
-        state: present
-        key: "{{ lookup('file', '/home/avelange/.ssh/id_rsa.pub') }}"  # Certifique-se de que a chave pública está no local correto
+    # 4. Configuração do SSH para autenticação com chave pública
+    - name: Criar diretório .ssh para usuários
+      file:
+        path: "/home/{{ item }}/.ssh"
+        state: directory
+        owner: "{{ item }}"
+        group: acesso_ssh
+        mode: '0700'
       loop:
         - avelange
+        - ifpb
+
+    - name: Adicionar chaves públicas
+      copy:
+        dest: "/home/{{ item }}/.ssh/authorized_keys"
+        content: "{{ lookup('file', ssh_key_path) }}"
+        owner: "{{ item }}"
+        group: acesso_ssh
+        mode: '0600'
+      loop:
+        - avelange
+        - ifpb
+
+    - name: Configurar SSH - Bloquear autenticação por senha
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+      notify: Restart SSH
+
+    - name: Configurar SSH - Bloquear login de root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+      notify: Restart SSH
+
+    - name: Configurar SSH - Permitir acesso apenas ao grupo acesso_ssh
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: 'AllowGroups acesso_ssh'
+        state: present
+      notify: Restart SSH
+
+    # 5. Conceder acesso root aos usuários
+    - name: Permitir que usuários do grupo acesso_ssh usem sudo sem senha
+      copy:
+        dest: /etc/sudoers.d/acesso_ssh
+        content: |
+          %acesso_ssh ALL=(ALL) NOPASSWD:ALL
+        owner: root
+        group: root
+        mode: '0440'
+
+    # 6. Mensagem de saudação ao acessar via SSH
+    - name: Adicionar mensagem de saudação ao SSH
+      copy:
+        dest: /etc/motd
+        content: |
+          Acesso restrito apenas à pessoas com autorização expressa
+          Seu acesso está sendo monitorado !!!
+        owner: root
+        group: root
+        mode: '0644'
+
+    # 7. Configuração do LVM
+    - name: Instalar o pacote lvm2
+      apt:
+        name: lvm2
+        state: present
+
+    - name: Criar Volume Group "dados" se não existir
+      command: vgcreate {{ volume_group_name }} /dev/sdb /dev/sdc /dev/sdd
+      args:
+        creates: "/dev/{{ volume_group_name }}"
+      ignore_errors: true
+
+    - name: Criar Logical Volume "sistema"
+      lvol:
+        vg: "{{ volume_group_name }}"
+        lv: "{{ logical_volume_name }}"
+        size: "{{ logical_volume_size }}"
+
+    - name: Formatar Logical Volume "sistema"
+      filesystem:
+        fstype: ext4
+        dev: "/dev/{{ volume_group_name }}/{{ logical_volume_name }}"
+
+    - name: Garantir montagem em /dados
+      mount:
+        path: /dados
+        src: "/dev/{{ volume_group_name }}/{{ logical_volume_name }}"
+        fstype: ext4
+        state: mounted
+
+    # 8. Configuração do NFS
+    - name: Instalar o servidor NFS
+      apt:
+        name: nfs-kernel-server
+        state: present
+
+    - name: Criar grupo nfs-ifpb
+      group:
+        name: nfs-ifpb
+        state: present
+
+    - name: Criar usuário nfs-ifpb
+      user:
+        name: nfs-ifpb
+        group: nfs-ifpb
+        home: /home/nfs-ifpb
+        shell: /usr/sbin/nologin
+        state: present
+
+    - name: Criar diretório /dados/nfs
+      file:
+        path: /dados/nfs
+        state: directory
+        owner: nfs-ifpb
+        group: nfs-ifpb
+        mode: '0775'
+
+    - name: Garantir que o arquivo /etc/exports exista
+      file:
+        path: /etc/exports
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configurar /etc/exports para NFS
+      lineinfile:
+        path: /etc/exports
+        line: '/dados/nfs {{ nfs_network }}(rw,sync,no_root_squash,all_squash,anonuid=1001,anongid=1001)'
+        state: present
+      notify: Restart NFS
+
+    # 9. Monitoramento de Acesso
+    - name: Criar arquivo de log de acessos
+      file:
+        path: /dados/nfs/acessos
+        state: touch
+        owner: nfs-ifpb
+        group: nfs-ifpb
+        mode: '0666'
+
+    - name: Criar script de monitoramento de acessos
+      copy:
+        dest: /etc/profile.d/monitor_acesso.sh
+        content: |
+          #!/bin/bash
+          echo "$(date '+%Y-%m-%d %H:%M:%S'); $USER; $SSH_TTY; $SSH_CLIENT" >> /dados/nfs/acessos
+        mode: '0755'
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Restart NFS
+      service:
+        name: nfs-kernel-server
+        state: restarted
