@@ -53,11 +53,11 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
    ```bash
     export VAGRANT_EXPERIMENTAL="disks"
 
-Em seguida, inicie a máquina virtual:
+4. Em seguida, inicie a máquina virtual:
    ```bash
    vagrant up
 
-4. **Acesse a VM via SSH: Após a execução do playbook, você pode acessar a VM usando SSH com a chave gerada:
+5. **Acesse a VM via SSH: Após a execução do playbook, você pode acessar a VM usando SSH com a chave gerada:
    ```bash
    ssh -i /home/<Seu_Usuário>/.ssh/id_rsa avelange@192.168.57.10
 
