@@ -73,40 +73,40 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
    ```bash
    vagrant up
 
-2. **Executar o provisionamento com Vagrant:
+2. **Executar o provisionamento com Vagrant:**
    ```bash
     vagrant provision
 
-3. **Acessar a VM via SSH:
+3. **Acessar a VM via SSH:**
     ```bash
     vagrant ssh
 
-4. **Verificar o hostname:
+4. **Verificar o hostname:**
     ```bash
     hostname
     cat /etc/hostname
 
-5. **Verificar grupos e usuários:
+5. **Verificar grupos e usuários:**
     ```bash
     getent group acesso_ssh
     id avelange
     id nfs-ifpb
 
-6. **Verificar status do SSH:
+6. **Verificar status do SSH:**
     ```bash
     sudo systemctl status sshd
 
-7. **Testar conexão SSH com chave privada:
+7. **Testar conexão SSH com chave privada:**
     ```bash
     ssh -i /home/avelange/.ssh/id_rsa avelange@192.168.57.10
 
-8. **Verificar configurações do SSH:
+8. **Verificar configurações do SSH:**
     ```bash
     grep PermitRootLogin /etc/ssh/sshd_config
     grep PasswordAuthentication /etc/ssh/sshd_config
     grep AllowGroups /etc/ssh/sshd_config
 
-9. **Verificar informações do LVM:
+9. **Verificar informações do LVM:**
     ```bash
     sudo vgdisplay dados
     sudo lvdisplay /dev/dados/sistema
@@ -114,13 +114,13 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
     df -h | grep /dados
     grep /dados /etc/fstab
 
-10. **Verificar status do NFS:
+10. **Verificar status do NFS:**
     ```bash
     sudo systemctl status nfs-kernel-server
     cat /etc/exports
     sudo exportfs -v
 
-11. **Montar e testar o compartilhamento NFS:
+11. **Montar e testar o compartilhamento NFS:**
     ```bash
     sudo mount -t nfs 192.168.57.10:/dados/nfs /mnt
     ls /mnt
@@ -128,7 +128,7 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
     ls /mnt
     sudo umount /mnt
 
-12. **Verificar logs de acessos NFS: 
+12. **Verificar logs de acessos NFS:**
     ```bash
     ls -l /dados/nfs/acessos
     cat /dados/nfs/acessos
