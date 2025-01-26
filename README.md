@@ -52,8 +52,8 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
 3. **Inicie a máquina virtual com o Vagrant: Antes de rodar o Vagrant, defina a variável de ambiente para utilizar o recurso experimental de discos:
    ```bash
     export VAGRANT_EXPERIMENTAL="disks"
-   
-   Em seguida, inicie a máquina virtual:
+
+Em seguida, inicie a máquina virtual:
    ```bash
    vagrant up
 
