@@ -124,8 +124,6 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
     ```bash
     sudo mount -t nfs 192.168.57.10:/dados/nfs /mnt
     ls /mnt
-    touch /mnt/test_file
-    ls /mnt
     sudo umount /mnt
 
 12. **Verificar logs de acessos NFS:**
