@@ -45,19 +45,19 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
    git clone <URL_DO_REPOSITORIO>
    cd <NOME_DO_REPOSITORIO>
 
-2. **Gere uma chave SSH para autenticação**: Caso ainda não tenha uma chave SSH, gere uma com o comando:
+2. **Gere uma chave SSH para autenticação**: Caso ainda não tenha uma chave SSH, gere uma com o comando:**
    ```bash
    ssh-keygen -t rsa -b 4096 -f /home/<Seu_Usuário>/.ssh/id_rsa
 
-3. **Inicie a máquina virtual com o Vagrant: Antes de rodar o Vagrant, defina a variável de ambiente para utilizar o recurso experimental de discos:
+3. **Inicie a máquina virtual com o Vagrant: Antes de rodar o Vagrant, defina a variável de ambiente para utilizar o recurso experimental de discos:**
    ```bash
     export VAGRANT_EXPERIMENTAL="disks"
 
-4. Em seguida, inicie a máquina virtual:
+4. **Em seguida, inicie a máquina virtual:**
    ```bash
    vagrant up
 
-5. **Acesse a VM via SSH: Após a execução do playbook, você pode acessar a VM usando SSH com a chave gerada:
+5. **Acesse a VM via SSH: Após a execução do playbook, você pode acessar a VM usando SSH com a chave gerada:**
    ```bash
    ssh -i /home/<Seu_Usuário>/.ssh/id_rsa avelange@192.168.57.10
 
