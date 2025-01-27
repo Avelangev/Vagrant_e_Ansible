@@ -96,9 +96,10 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
     ```bash
     sudo systemctl status sshd
 
-7. **Testar conexão SSH com chave privada:**
+7. **Testar conexão SSH com chave privada e pública:**
     ```bash
     ssh -i /home/avelange/.ssh/id_rsa avelange@192.168.57.10
+    ssh -i /home/avelange/.ssh/id_rsa.pub avelange@192.168.57.10
 
 8. **Verificar configurações do SSH:**
     ```bash
@@ -112,7 +113,6 @@ Antes de iniciar, certifique-se de que as seguintes ferramentas estão instalada
     sudo lvdisplay /dev/dados/sistema
     sudo blkid /dev/dados/sistema
     df -h | grep /dados
-    grep /dados /etc/fstab
 
 10. **Verificar status do NFS:**
     ```bash
