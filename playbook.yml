@@ -12,9 +12,9 @@
   tasks:
     # 1. Atualização do Sistema Operacional
     - name: Atualizar pacotes do sistema operacional
-      apt:
+      package:
         update_cache: yes
-        upgrade: dist
+        #upgrade: dist
 
     # 2. Configuração do Hostname
     - name: Alterar o hostname
@@ -43,6 +43,7 @@
       loop:
         - { name: "avelange", home: "/home/avelange" }
         - { name: "ifpb", home: "/home/ifpb" }
+        - { name: "vagrant", home: "/home/vagrant" }
 
     # 4. Configuração do SSH para autenticação com chave pública
     - name: Criar diretório .ssh para usuários
